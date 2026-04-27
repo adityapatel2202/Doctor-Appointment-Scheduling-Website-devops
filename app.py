@@ -107,6 +107,97 @@ def patient_dashboard():
     doctors = Doctor.query.all()
     return render_template("patient_dashboard.html", doctors=doctors)
 
+# -------------------- Doctor --------------------
+
+
+@app.route("/doctor/register", methods=["GET", "POST"])
+def doctor_register():
+    if request.method == "POST":
+        name = request.form["name"]
+        specialization = request.form["specialization"]
+        email = request.form["email"]
+        password = request.form["password"]
+        phone = request.form["phone"]
+        qualification = request.form["qualification"]
+        experience = request.form["experience"]
+
+        existing_doctor = Doctor.query.filter_by(email=email).first()
+        if existing_doctor:
+            flash("Doctor email already registered.")
+            return redirect(url_for("doctor_register"))
+
+        new_doctor = Doctor(
+            name=name,
+            specialization=specialization,
+            email=email,
+            password=generate_password_hash(password),
+            phone=phone,
+            qualification=qualification,
+            experience=experience
+        )
+
+        db.session.add(new_doctor)
+        db.session.commit()
+
+        flash("Doctor registration successful. Please login.")
+        return redirect(url_for("doctor_login"))
+
+    return render_template("doctor_register.html")
+
+@app.route("/doctor/login", methods=["GET", "POST"])
+def doctor_login():
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+
+        doctor = Doctor.query.filter_by(email=email).first()
+        if doctor and check_password_hash(doctor.password, password):
+            session.clear()
+            session["doctor_id"] = doctor.id
+            session["doctor_name"] = doctor.name
+            session["role"] = "doctor"
+            return redirect(url_for("doctor_dashboard"))
+        else:
+            flash("Invalid doctor email or password.")
+
+    return render_template("doctor_login.html")
+
+
+@app.route("/doctor/profile", methods=["GET", "POST"])
+def doctor_profile():
+    if session.get("role") != "doctor":
+        return redirect(url_for("doctor_login"))
+
+    doctor = Doctor.query.get_or_404(session["doctor_id"])
+
+    if request.method == "POST":
+        doctor.name = request.form["name"]
+        doctor.email = request.form["email"]
+        doctor.specialization = request.form["specialization"]
+        doctor.phone = request.form["phone"]
+        doctor.qualification = request.form["qualification"]
+        doctor.experience = request.form["experience"]
+
+        db.session.commit()
+        flash("Doctor profile updated successfully.")
+        return redirect(url_for("doctor_profile"))
+
+    return render_template("doctor_profile.html", doctor=doctor)
+
+@app.route("/doctor/dashboard")
+def doctor_dashboard():
+    if session.get("role") != "doctor":
+        return redirect(url_for("doctor_login"))
+
+    doctor_id = session["doctor_id"]
+    appointments = Appointment.query.filter_by(doctor_id=doctor_id).all()
+
+    appointment_data = []
+    for appointment in appointments:
+        patient = Patient.query.get(appointment.patient_id)
+        appointment_data.append({
+            "id": appointment.id,
+            "patient_name": patient.name if patient else "Unknown",
 @app.route("/book/<int:doctor_id>", methods=["GET", "POST"])
 def book_appointment(doctor_id):
     if session.get("role") != "patient":
@@ -162,6 +253,15 @@ def my_appointments():
             "appointment_time": appointment.appointment_time,
             "status": appointment.status
         })
+        
+
+    slots = Slot.query.filter_by(doctor_id=doctor_id, is_booked=False).all()
+
+    return render_template(
+        "doctor_dashboard.html",
+        appointments=appointment_data,
+        slots=slots
+    )
 
     return render_template("my_appointments.html", appointments=appointment_data)
 
