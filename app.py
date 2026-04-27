@@ -52,3 +52,58 @@ class Doctor(db.Model):
 @app.route("/")
 def home():
     return render_template("index.html")
+
+@app.route("/patient/register", methods=["GET", "POST"])
+def patient_register():
+    if request.method == "POST":
+        name = request.form["name"]
+        email = request.form["email"]
+        password = request.form["password"]
+
+        existing_patient = Patient.query.filter_by(email=email).first()
+        if existing_patient:
+            flash("Email already registered.")
+            return redirect(url_for("patient_register"))
+
+        new_patient = Patient(
+            name=name,
+            email=email,
+            password=generate_password_hash(password)
+                                                                                                                                                                                                                                                                                                        
+        )
+        db.session.add(new_patient)
+        db.session.commit()
+
+        flash("Patient registration successful. Please login.")
+        return redirect(url_for("patient_login"))
+
+    return render_template("patient_register.html")
+
+
+@app.route("/patient/login", methods=["GET", "POST"])
+def patient_login():
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+
+        patient = Patient.query.filter_by(email=email).first()
+        if patient and check_password_hash(patient.password, password):
+            session.clear()
+            session["patient_id"] = patient.id
+            session["patient_name"] = patient.name
+            session["role"] = "patient"
+            return redirect(url_for("patient_dashboard"))
+        else:
+            flash("Invalid patient email or password.")
+
+    return render_template("patient_login.html")
+
+
+@app.route("/patient/dashboard")
+def patient_dashboard():
+    if session.get("role") != "patient":
+        return redirect(url_for("patient_login"))
+
+    doctors = Doctor.query.all()
+    return render_template("patient_dashboard.html", doctors=doctors)
+
