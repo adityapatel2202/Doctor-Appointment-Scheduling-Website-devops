@@ -53,8 +53,7 @@ class Doctor(db.Model):
 def home():
     return render_template("index.html")
 
-<<<<<<< HEAD
-=======
+
 # -------------------- Patient --------------------
 
 @app.route("/patient/register", methods=["GET", "POST"])
@@ -214,4 +213,6 @@ def doctor_dashboard():
         slots=slots
     )
 
->>>>>>> fc1daba550c0a08d6e15c39ed937bf8a9866f9fb
+
+
+
