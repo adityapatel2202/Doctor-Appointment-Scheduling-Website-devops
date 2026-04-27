@@ -53,6 +53,8 @@ class Doctor(db.Model):
 def home():
     return render_template("index.html")
 
+# -------------------- Patient --------------------
+
 @app.route("/patient/register", methods=["GET", "POST"])
 def patient_register():
     if request.method == "POST":
@@ -69,7 +71,6 @@ def patient_register():
             name=name,
             email=email,
             password=generate_password_hash(password)
-                                                                                                                                                                                                                                                                                                        
         )
         db.session.add(new_patient)
         db.session.commit()
@@ -106,178 +107,3 @@ def patient_dashboard():
 
     doctors = Doctor.query.all()
     return render_template("patient_dashboard.html", doctors=doctors)
-
-# -------------------- Doctor --------------------
-
-
-@app.route("/doctor/register", methods=["GET", "POST"])
-def doctor_register():
-    if request.method == "POST":
-        name = request.form["name"]
-        specialization = request.form["specialization"]
-        email = request.form["email"]
-        password = request.form["password"]
-        phone = request.form["phone"]
-        qualification = request.form["qualification"]
-        experience = request.form["experience"]
-
-        existing_doctor = Doctor.query.filter_by(email=email).first()
-        if existing_doctor:
-            flash("Doctor email already registered.")
-            return redirect(url_for("doctor_register"))
-
-        new_doctor = Doctor(
-            name=name,
-            specialization=specialization,
-            email=email,
-            password=generate_password_hash(password),
-            phone=phone,
-            qualification=qualification,
-            experience=experience
-        )
-
-        db.session.add(new_doctor)
-        db.session.commit()
-
-        flash("Doctor registration successful. Please login.")
-        return redirect(url_for("doctor_login"))
-
-    return render_template("doctor_register.html")
-
-@app.route("/doctor/login", methods=["GET", "POST"])
-def doctor_login():
-    if request.method == "POST":
-        email = request.form["email"]
-        password = request.form["password"]
-
-        doctor = Doctor.query.filter_by(email=email).first()
-        if doctor and check_password_hash(doctor.password, password):
-            session.clear()
-            session["doctor_id"] = doctor.id
-            session["doctor_name"] = doctor.name
-            session["role"] = "doctor"
-            return redirect(url_for("doctor_dashboard"))
-        else:
-            flash("Invalid doctor email or password.")
-
-    return render_template("doctor_login.html")
-
-
-@app.route("/doctor/profile", methods=["GET", "POST"])
-def doctor_profile():
-    if session.get("role") != "doctor":
-        return redirect(url_for("doctor_login"))
-
-    doctor = Doctor.query.get_or_404(session["doctor_id"])
-
-    if request.method == "POST":
-        doctor.name = request.form["name"]
-        doctor.email = request.form["email"]
-        doctor.specialization = request.form["specialization"]
-        doctor.phone = request.form["phone"]
-        doctor.qualification = request.form["qualification"]
-        doctor.experience = request.form["experience"]
-
-        db.session.commit()
-        flash("Doctor profile updated successfully.")
-        return redirect(url_for("doctor_profile"))
-
-    return render_template("doctor_profile.html", doctor=doctor)
-
-@app.route("/doctor/dashboard")
-def doctor_dashboard():
-    if session.get("role") != "doctor":
-        return redirect(url_for("doctor_login"))
-
-    doctor_id = session["doctor_id"]
-    appointments = Appointment.query.filter_by(doctor_id=doctor_id).all()
-
-    appointment_data = []
-    for appointment in appointments:
-        patient = Patient.query.get(appointment.patient_id)
-        appointment_data.append({
-            "id": appointment.id,
-            "patient_name": patient.name if patient else "Unknown",
-@app.route("/book/<int:doctor_id>", methods=["GET", "POST"])
-def book_appointment(doctor_id):
-    if session.get("role") != "patient":
-        return redirect(url_for("patient_login"))
-
-    doctor = Doctor.query.get_or_404(doctor_id)
-
-    # show only unbooked slots for this doctor
-    available_slots = Slot.query.filter_by(doctor_id=doctor_id, is_booked=False).all()
-
-    if request.method == "POST":
-        slot_id = request.form["slot_id"]
-
-        selected_slot = Slot.query.get(slot_id)
-
-        if not selected_slot or selected_slot.is_booked:
-            flash("This slot is no longer available.")
-            return redirect(url_for("book_appointment", doctor_id=doctor_id))
-
-        new_appointment = Appointment(
-            patient_id=session["patient_id"],
-            doctor_id=doctor_id,
-            appointment_date=selected_slot.slot_date,
-            appointment_time=selected_slot.slot_time,
-            status="Pending"
-        )
-
-        selected_slot.is_booked = True
-
-        db.session.add(new_appointment)
-        db.session.commit()
-
-        flash("Appointment booked successfully.")
-        return redirect(url_for("my_appointments"))
-
-    return render_template("book_appointment.html", doctor=doctor, slots=available_slots)
-
-@app.route("/my-appointments")
-def my_appointments():
-    if session.get("role") != "patient":
-        return redirect(url_for("patient_login"))
-
-    appointments = Appointment.query.filter_by(patient_id=session["patient_id"]).all()
-
-    appointment_data = []
-    for appointment in appointments:
-        doctor = Doctor.query.get(appointment.doctor_id)
-        appointment_data.append({
-            "id": appointment.id,
-            "doctor_name": doctor.name if doctor else "Unknown",
-            "specialization": doctor.specialization if doctor else "Unknown",
-            "appointment_date": appointment.appointment_date,
-            "appointment_time": appointment.appointment_time,
-            "status": appointment.status
-        })
-        
-
-    slots = Slot.query.filter_by(doctor_id=doctor_id, is_booked=False).all()
-
-    return render_template(
-        "doctor_dashboard.html",
-        appointments=appointment_data,
-        slots=slots
-    )
-
-    return render_template("my_appointments.html", appointments=appointment_data)
-
-
-@app.route("/cancel-appointment/<int:appointment_id>")
-def cancel_appointment(appointment_id):
-    if session.get("role") != "patient":
-        return redirect(url_for("patient_login"))
-
-    appointment = Appointment.query.get_or_404(appointment_id)
-
-    if appointment.patient_id != session["patient_id"]:
-        flash("Unauthorized action.")
-        return redirect(url_for("my_appointments"))
-
-    appointment.status = "Cancelled"
-    db.session.commit()
-    flash("Appointment cancelled successfully.")
-    return redirect(url_for("my_appointments"))
