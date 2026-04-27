@@ -109,6 +109,82 @@ def patient_dashboard():
     doctors = Doctor.query.all()
     return render_template("patient_dashboard.html", doctors=doctors)
 
+@app.route("/book/<int:doctor_id>", methods=["GET", "POST"])
+def book_appointment(doctor_id):
+    if session.get("role") != "patient":
+        return redirect(url_for("patient_login"))
+
+    doctor = Doctor.query.get_or_404(doctor_id)
+
+    # show only unbooked slots for this doctor
+    available_slots = Slot.query.filter_by(doctor_id=doctor_id, is_booked=False).all()
+
+    if request.method == "POST":
+        slot_id = request.form["slot_id"]
+
+        selected_slot = Slot.query.get(slot_id)
+
+        if not selected_slot or selected_slot.is_booked:
+            flash("This slot is no longer available.")
+            return redirect(url_for("book_appointment", doctor_id=doctor_id))
+
+        new_appointment = Appointment(
+            patient_id=session["patient_id"],
+            doctor_id=doctor_id,
+            appointment_date=selected_slot.slot_date,
+            appointment_time=selected_slot.slot_time,
+            status="Pending"
+        )
+
+        selected_slot.is_booked = True
+
+        db.session.add(new_appointment)
+        db.session.commit()
+
+        flash("Appointment booked successfully.")
+        return redirect(url_for("my_appointments"))
+
+    return render_template("book_appointment.html", doctor=doctor, slots=available_slots)
+
+@app.route("/my-appointments")
+def my_appointments():
+    if session.get("role") != "patient":
+        return redirect(url_for("patient_login"))
+
+    appointments = Appointment.query.filter_by(patient_id=session["patient_id"]).all()
+
+    appointment_data = []
+    for appointment in appointments:
+        doctor = Doctor.query.get(appointment.doctor_id)
+        appointment_data.append({
+            "id": appointment.id,
+            "doctor_name": doctor.name if doctor else "Unknown",
+            "specialization": doctor.specialization if doctor else "Unknown",
+            "appointment_date": appointment.appointment_date,
+            "appointment_time": appointment.appointment_time,
+            "status": appointment.status
+        })
+
+    return render_template("my_appointments.html", appointments=appointment_data)
+
+
+@app.route("/cancel-appointment/<int:appointment_id>")
+def cancel_appointment(appointment_id):
+    if session.get("role") != "patient":
+        return redirect(url_for("patient_login"))
+
+    appointment = Appointment.query.get_or_404(appointment_id)
+
+    if appointment.patient_id != session["patient_id"]:
+        flash("Unauthorized action.")
+        return redirect(url_for("my_appointments"))
+
+    appointment.status = "Cancelled"
+    db.session.commit()
+    flash("Appointment cancelled successfully.")
+    return redirect(url_for("my_appointments"))
+
+
 # -------------------- Doctor --------------------
 
 
@@ -214,5 +290,111 @@ def doctor_dashboard():
     )
 
 
+@app.route("/doctor/update-appointment/<int:appointment_id>/<string:new_status>")
+def update_appointment_status(appointment_id, new_status):
+    if session.get("role") != "doctor":
+        return redirect(url_for("doctor_login"))
 
+    appointment = Appointment.query.get_or_404(appointment_id)
+
+    if appointment.doctor_id != session["doctor_id"]:
+        flash("Unauthorized action.")
+        return redirect(url_for("doctor_dashboard"))
+
+    allowed_statuses = ["Accepted", "Rejected", "Cancelled", "Completed"]
+
+    if new_status in allowed_statuses:
+        appointment.status = new_status
+
+        if new_status == "Cancelled":
+            slot = Slot.query.filter_by(
+                doctor_id=appointment.doctor_id,
+                slot_date=appointment.appointment_date,
+                slot_time=appointment.appointment_time
+            ).first()
+
+            if slot:
+                slot.is_booked = False
+
+        db.session.commit()
+        flash(f"Appointment {new_status.lower()} successfully.")
+
+    return redirect(url_for("doctor_dashboard"))
+
+
+@app.route("/doctor/add-slot", methods=["GET", "POST"])
+def add_slot():
+    if session.get("role") != "doctor":
+        return redirect(url_for("doctor_login"))
+
+    if request.method == "POST":
+        slot_date = request.form["slot_date"]
+        slot_time = request.form["slot_time"]
+
+        new_slot = Slot(
+            doctor_id=session["doctor_id"],
+            slot_date=slot_date,
+            slot_time=slot_time,
+            is_booked=False
+        )
+        db.session.add(new_slot)
+        db.session.commit()
+
+        flash("Slot added successfully.")
+        return redirect(url_for("doctor_dashboard"))
+
+    return render_template("manage_slots.html")
+
+
+@app.route("/doctor/delete-slot/<int:slot_id>")
+def delete_slot(slot_id):
+    if session.get("role") != "doctor":
+        return redirect(url_for("doctor_login"))
+
+    slot = Slot.query.get_or_404(slot_id)
+
+    if slot.doctor_id != session["doctor_id"]:
+        flash("Unauthorized action.")
+        return redirect(url_for("doctor_dashboard"))
+
+    db.session.delete(slot)
+    db.session.commit()
+    flash("Slot deleted successfully.")
+    return redirect(url_for("doctor_dashboard"))
+
+
+# -------------------- Logout --------------------
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("Logged out successfully.")
+    return redirect(url_for("home"))
+
+
+# -------------------- Run App --------------------
+
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
+
+        # # Add sample doctors only if table is empty
+        # if Doctor.query.count() == 0:
+        #     doctor1 = Doctor(
+        #         name="Raj Mehta",
+        #         specialization="Cardiologist",
+        #         email="raj@doctor.com",
+        #         password=generate_password_hash("1234")
+        #     )
+        #     doctor2 = Doctor(
+        #         name="Neha Sharma",
+        #         specialization="Dentist",
+        #         email="neha@doctor.com",
+        #         password=generate_password_hash("1234")
+        #     )
+        #     db.session.add(doctor1)
+        #     db.session.add(doctor2)
+        #     db.session.commit()
+
+    app.run(debug=True)
 
