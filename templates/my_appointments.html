@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Appointments</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="topbar">
+            <h2>My Appointments</h2>
+            <div>
+                <a class="btn small-btn" href="{{ url_for('patient_dashboard') }}">Back</a>
+                <a class="btn logout-btn small-btn" href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <p class="flash-message">{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card">
+            <table>
+                <tr>
+                    <th>Doctor</th>
+                    <th>Specialization</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+
+                {% for appointment in appointments %}
+                <tr>
+                    <td>{{ appointment.doctor_name }}</td>
+                    <td>{{ appointment.specialization }}</td>
+                    <td>{{ appointment.appointment_date }}</td>
+                    <td>{{ appointment.appointment_time }}</td>
+                    <td>{{ appointment.status }}</td>
+                    <td>
+                        {% if appointment.status != "Cancelled" and appointment.status != "Completed" %}
+                        <a class="btn danger-btn small-btn" href="{{ url_for('cancel_appointment', appointment_id=appointment.id) }}">
+                            Cancel
+                        </a>
+                        {% else %}
+                        No Action
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</body>
+</html>
