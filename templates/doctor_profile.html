@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="card form-card">
+            <h2>Doctor Profile</h2>
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <p class="flash-message">{{ message }}</p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST">
+                <label>Doctor Name</label>
+                <input type="text" name="name" value="{{ doctor.name }}" required>
+
+                <label>Email</label>
+                <input type="email" name="email" value="{{ doctor.email }}" required>
+
+                <label>Specialization</label>
+                <input type="text" name="specialization" value="{{ doctor.specialization }}" required>
+
+                <label>Phone</label>
+                <input type="text" name="phone" value="{{ doctor.phone or '' }}">
+
+                <label>Qualification</label>
+                <input type="text" name="qualification" value="{{ doctor.qualification or '' }}">
+
+                <label>Experience</label>
+                <input type="text" name="experience" value="{{ doctor.experience or '' }}">
+
+                <button type="submit" class="btn">Update Profile</button>
+            </form>
+
+            <a class="btn secondary-btn" href="{{ url_for('doctor_dashboard') }}">Back to Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>
