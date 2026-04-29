@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Slots</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="card form-card">
+            <h2>Add Available Slot</h2>
+
+            <form method="POST">
+                <label>Slot Date</label>
+                <input type="date" name="slot_date" required>
+
+                <label>Slot Time</label>
+                <input type="time" name="slot_time" required>
+
+                <button type="submit" class="btn">Add Slot</button>
+            </form>
+
+            <a class="btn secondary-btn" href="{{ url_for('doctor_dashboard') }}">Back to Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>
