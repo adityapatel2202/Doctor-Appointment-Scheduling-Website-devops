@@ -1,16 +1,98 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>MediBook - Doctor Appointment System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-
 <body>
-    <h1>Welcome to the Home Page</h1>
-    <p>This is a simple Flask application.</p>
+
+    <!-- Navbar -->
+    <nav class="main-navbar">
+        <div class="logo">MediBook</div>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#how">How It Works</a>
+            <a href="{{ url_for('patient_login') }}">Patient Login</a>
+            <a href="{{ url_for('doctor_login') }}">Doctor Login</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1>Book Your Doctor Appointment Online</h1>
+            <p>
+                MediBook helps patients book appointments easily and helps doctors manage their schedule in one place.
+            </p>
+
+            <div class="hero-buttons">
+                <a class="btn" href="{{ url_for('patient_register') }}">Register as Patient</a>
+                <a class="btn secondary-btn" href="{{ url_for('doctor_register') }}">Register as Doctor</a>
+            </div>
+        </div>
+
+        <div class="hero-card">
+            <h3>Quick Access</h3>
+            <a class="btn full-btn" href="{{ url_for('patient_login') }}">Patient Login</a>
+            <a class="btn full-btn" href="{{ url_for('doctor_login') }}">Doctor Login</a>
+            <a class="btn full-btn secondary-btn" href="{{ url_for('patient_register') }}">Patient Register</a>
+            <a class="btn full-btn secondary-btn" href="{{ url_for('doctor_register') }}">Doctor Register</a>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section" id="features">
+        <h2>Website Features</h2>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h3>Patient Dashboard</h3>
+                <p>Patients can view doctors, select available slots, book appointments and cancel appointments.</p>
+            </div>
+
+            <div class="feature-card">
+                <h3>Doctor Dashboard</h3>
+                <p>Doctors can add slots, view bookings, accept, reject, cancel and complete appointments.</p>
+            </div>
+
+            <div class="feature-card">
+                <h3>Secure Login</h3>
+                <p>Password hashing is used to keep patient and doctor login details safe.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="section how-section" id="how">
+        <h2>How It Works</h2>
+
+        <div class="steps">
+            <div class="step-box">
+                <span>1</span>
+                <h3>Doctor Adds Slots</h3>
+                <p>Doctor adds available appointment date and time.</p>
+            </div>
+
+            <div class="step-box">
+                <span>2</span>
+                <h3>Patient Books Slot</h3>
+                <p>Patient selects doctor and books an available slot.</p>
+            </div>
+
+            <div class="step-box">
+                <span>3</span>
+                <h3>Doctor Confirms</h3>
+                <p>Doctor accepts, rejects or cancels the appointment.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2026 MediBook | Doctor Appointment Scheduling System</p>
+    </footer>
 
 </body>
 </html>
