@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="card form-card">
+            <h2>Book Appointment</h2>
+            <p><strong>Doctor:</strong> Dr. {{ doctor.name }}</p>
+            <p><strong>Specialization:</strong> {{ doctor.specialization }}</p>
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <p class="flash-message">{{ message }}</p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% if slots %}
+            <form method="POST">
+                <label>Select Available Slot</label>
+                <select name="slot_id" required>
+                    <option value="">-- Select Slot --</option>
+                    {% for slot in slots %}
+                        <option value="{{ slot.id }}">
+                            {{ slot.slot_date }} - {{ slot.slot_time }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <button type="submit" class="btn">Confirm Booking</button>
+            </form>
+            {% else %}
+                <p>No available slots for this doctor.</p>
+            {% endif %}
+
+            <a class="btn secondary-btn" href="{{ url_for('patient_dashboard') }}">Back</a>
+        </div>
+    </div>
+</body>
+</html>
