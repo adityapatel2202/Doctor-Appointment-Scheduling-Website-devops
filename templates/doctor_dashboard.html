@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="dashboard-wrapper">
+
+        <div class="dashboard-header">
+            <div>
+                <h1>Doctor Dashboard</h1>
+                <p class="dashboard-subtitle">Manage appointments and available slots</p>
+            </div>
+
+            <div class="header-actions">
+                <a class="btn" href="{{ url_for('doctor_profile') }}">My Profile</a>
+                <a class="btn" href="{{ url_for('add_slot') }}">Add Slot</a>
+                <a class="btn logout-btn" href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-message">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card welcome-card">
+            <h2>Welcome, Dr. {{ session['doctor_name'] }}</h2>
+            <p>Here you can manage patient appointments, update appointment status, and control your available booking slots.</p>
+        </div>
+
+        <div class="dashboard-grid">
+
+            <div class="card appointments-card">
+                <h2>Appointments</h2>
+
+                <table>
+                    <tr>
+                        <th>Patient Name</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+
+                    {% for appointment in appointments %}
+                    <tr>
+                        <td>{{ appointment.patient_name }}</td>
+                        <td>{{ appointment.appointment_date }}</td>
+                        <td>{{ appointment.appointment_time }}</td>
+
+                        <td>
+                            {% if appointment.status == "Pending" %}
+                                <span class="status pending">Pending</span>
+                            {% elif appointment.status == "Accepted" %}
+                                <span class="status accepted">Accepted</span>
+                            {% elif appointment.status == "Rejected" %}
+                                <span class="status rejected">Rejected</span>
+                            {% elif appointment.status == "Cancelled" %}
+                                <span class="status cancelled">Cancelled</span>
+                            {% elif appointment.status == "Completed" %}
+                                <span class="status completed">Completed</span>
+                            {% else %}
+                                <span class="status pending">{{ appointment.status }}</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <div class="action-buttons">
+                                {% if appointment.status == "Pending" %}
+                                    <a class="btn small-btn" href="{{ url_for('update_appointment_status', appointment_id=appointment.id, new_status='Accepted') }}">Accept</a>
+                                    <a class="btn danger-btn small-btn" href="{{ url_for('update_appointment_status', appointment_id=appointment.id, new_status='Rejected') }}">Reject</a>
+                                    <a class="btn warning-btn small-btn" href="{{ url_for('update_appointment_status', appointment_id=appointment.id, new_status='Cancelled') }}">Cancel</a>
+
+                                {% elif appointment.status == "Accepted" %}
+                                    <a class="btn secondary-btn small-btn" href="{{ url_for('update_appointment_status', appointment_id=appointment.id, new_status='Completed') }}">Complete</a>
+                                    <a class="btn warning-btn small-btn" href="{{ url_for('update_appointment_status', appointment_id=appointment.id, new_status='Cancelled') }}">Cancel</a>
+
+                                {% elif appointment.status == "Rejected" %}
+                                    <span class="status rejected">Rejected</span>
+
+                                {% elif appointment.status == "Cancelled" %}
+                                    <span class="status cancelled">Cancelled</span>
+
+                                {% elif appointment.status == "Completed" %}
+                                    <span class="status completed">Completed</span>
+
+                                {% else %}
+                                    <span class="status pending">{{ appointment.status }}</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+            <div class="card slots-card">
+                <h2>Available Slots</h2>
+
+                <table>
+                    <tr>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Action</th>
+                    </tr>
+
+                    {% for slot in slots %}
+                    <tr>
+                        <td>{{ slot.slot_date }}</td>
+                        <td>{{ slot.slot_time }}</td>
+                        <td>
+                            <a class="btn danger-btn small-btn" href="{{ url_for('delete_slot', slot_id=slot.id) }}">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>

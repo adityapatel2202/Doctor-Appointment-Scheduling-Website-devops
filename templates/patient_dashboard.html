@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="topbar">
+            <h2>Patient Dashboard</h2>
+            <div>
+                <a class="btn small-btn" href="{{ url_for('my_appointments') }}">My Appointments</a>
+                <a class="btn logout-btn small-btn" href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Welcome, {{ session['patient_name'] }}</h3>
+            <p>Select a doctor and book your appointment.</p>
+        </div>
+
+        <div class="card">
+            <h3>Available Doctors</h3>
+            <div class="grid">
+                {% for doctor in doctors %}
+                <div class="doctor-card">
+                    <h4>Dr. {{ doctor.name }}</h4>
+                    <p><strong>Specialization:</strong> {{ doctor.specialization }}</p>
+                    <a class="btn" href="{{ url_for('book_appointment', doctor_id=doctor.id) }}">Book Now</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
