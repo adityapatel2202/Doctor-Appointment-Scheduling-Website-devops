@@ -2,3 +2,5 @@ venv/
 
 .env
 database.db
+instance/
+.pem
